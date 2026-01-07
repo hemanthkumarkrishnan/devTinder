@@ -49,10 +49,24 @@ app.delete("/user", async (req, res) => {
     res.status(400).send("error in adding user: " + err.message);
   }
 });
-app.patch("/user", async (req, res) => {
-  const userId = req.body.userId;
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params.userId;
   const data = req.body;
+
+  const allowedEdits = ["gender","skills","about"]
   try {
+
+    const incomindedit = Object.keys(data).every((x)=>{
+      return allowedEdits.includes(x)
+    })
+
+    if(!incomindedit){
+      throw new Error("Not allower to edit this fields")
+    }
+
+    if(req.body.skills.length > 5){
+      throw new Error("skills cant crosss more than 5")
+    }
    
     const user = await User.findByIdAndUpdate({_id:userId},data,{runValidators:true});
     console.log(user)

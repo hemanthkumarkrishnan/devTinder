@@ -1,11 +1,12 @@
 const mongoose =require("mongoose")
+const validator = require("validator")
 
 const userSchema = new mongoose.Schema({
 
     firstName:{
         type:String,
         required:true,
-        minLength:5
+        minLength:3
     },
     lastName:{
         type:String,
@@ -13,14 +14,24 @@ const userSchema = new mongoose.Schema({
     },
     emailId:{
         type:String,
-        required:true,
+        required:true, 
         unique:true,
         trim:true,
-        lowercase:true
+        lowercase:true,
+        validate:(value)=>{
+            if(!validator.isEmail(value)){
+                  throw new Error("the email isn't valid or invalid"+ value)
+            }
+        }
     },
     password:{
         type:String,
-        required:true
+        required:true,
+         validate:(value)=>{
+              if(!validator.isStrongPassword(value)){
+                  throw new Error("Enter a strong Password" + value)
+            }
+        }
     },
     age:{
         type:Number,
@@ -37,6 +48,15 @@ const userSchema = new mongoose.Schema({
     skills:{
         type:[String],
 
+    },
+    photoUrl:{
+        type:String,
+        default:"https://www.hitpaw.com/photo-tips/profile-photo.html",
+        validate:(value)=>{
+             if(!validator.isURL(value)){
+                  throw new Error("the photourl isn't valid or invalid " + value)
+            }
+        }
     },
     about:{
         type:String,
