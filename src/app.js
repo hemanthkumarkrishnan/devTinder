@@ -4,12 +4,11 @@ const bcrypt = require("bcrypt");
 const User = require("./models/user");
 const { validateSignupData } = require("./utils/validation");
 const cookieParser = require("cookie-parser");
-const jwt = require("jsonwebtoken");
-const {userAuth} = require("./Middleware/Auth");
+const { userAuth } = require("./Middleware/Auth");
 const app = express();
 
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser()); 
 
 app.post("/signup", async (req, res) => {
   try {
@@ -43,17 +42,15 @@ app.post("/login", async (req, res) => {
       throw new Error("Invalid credentials");
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await validatePassword(password);
 
     if (isPasswordValid) {
-      const token = await jwt.sign({ _id: user._id }, "DEV@Tinder$9442",{
-        expiresIn:"7d"
-      });
+      const token = await user.getJWT();
 
-      res.cookie("token", token,{
-        expires:new Date(Date.now()+ 8 *3600000)
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 8 * 3600000),
       });
-      res.send("Login sucessful!!");
+      res.send("Login sucessful!!"); 
     } else {
       throw new Error("Invalid credentials");
     }
@@ -71,10 +68,10 @@ app.get("/profile", userAuth, async (req, res) => {
   }
 });
 
-app.post("/sendConnectionRequest",userAuth,(req,res)=>{
+app.post("/sendConnectionRequest", userAuth, (req, res) => {
   const user = req.user;
-  res.send(user.firstName +"sent connection request")
-})
+  res.send(user.firstName + "sent connection request");
+});
 
 connectDB()
   .then(() => {
