@@ -34,10 +34,8 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
       .populate("fromUserId", USER_SAFE_DATA)
       .populate("toUserId", USER_SAFE_DATA);
 
- 
-
     const data = connections.map((row) => {
-      if ( row.fromUserId._id.toString() === loggedInUser._id.toString()) {
+      if (row.fromUserId._id.toString() === loggedInUser._id.toString()) {
         return row.toUserId;
       }
       return row.fromUserId;
@@ -54,25 +52,30 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
 userRouter.get("/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
+    const page = parseInt(req.query.page) || 1;
+
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 50 ? 50 : limit;
+    const skip = (page - 1) * limit;
 
     const connectionRequests = await ConnectionRequest.find({
-      $or: [
-        { fromUserId: loggedInUser._id },
-        { toUserId: loggedInUser._id },
-      ],
+      $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
     }).select("fromUserId toUserId");
-    
+
     const hideUsersFromFeed = new Set();
     connectionRequests.forEach((request) => {
       hideUsersFromFeed.add(request.fromUserId._id.toString());
       hideUsersFromFeed.add(request.toUserId._id.toString());
     });
     const users = await User.find({
-       $and: [
-         { _id: { $ne: loggedInUser._id } },
-         { _id: { $nin: Array.from(hideUsersFromFeed) } },
-       ],
-    }).select(USER_SAFE_DATA);
+      $and: [
+        { _id: { $ne: loggedInUser._id } },
+        { _id: { $nin: Array.from(hideUsersFromFeed) } },
+      ],
+    })
+      .select(USER_SAFE_DATA)
+      .skip(skip)
+      .limit(limit);
 
     res.json({
       message: "Connection requests fetched successfully",
