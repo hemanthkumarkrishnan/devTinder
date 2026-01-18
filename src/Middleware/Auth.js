@@ -14,9 +14,9 @@ const userAuth = async (req, res, next) => {
       throw new Error("user not found");
     }
     req.user = user;
-    next();
+   return next();
   } catch (err) {
-    res.status(401).send("unauthorized request");
+    return res.status(401).send("unauthorized request");
   }
 };
 
