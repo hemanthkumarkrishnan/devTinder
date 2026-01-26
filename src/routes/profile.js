@@ -20,13 +20,13 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
     }
     const loggedInUser = req.user;
     Object.keys(req.body).forEach((key) => (loggedInUser[key] = req.body[key]));
-    loggedInUser.save();
+    await loggedInUser.save();
     res.json({
       message: `${loggedInUser.firstName} ,your profile updated succcessful`,
       data: loggedInUser,
     });
   } catch (err) {
-    res.status(400).send("ERROR : " + err.message);
+    return res.status(400).send("ERROR : " + err.message);
   }
 });
 profileRouter.patch("/profile/change-password", userAuth, async (req, res) => {
