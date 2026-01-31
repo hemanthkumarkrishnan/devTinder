@@ -4,11 +4,13 @@ const { userAuth } = require("../Middleware/Auth");
 const ConnectionRequest = require("../models/connectionRequest");
 const User = require("../models/user");
 const mongoose = require("mongoose");
+const sendEmail = require("../utils/sendEmail");
 
 requestRouter.post(
   "/request/send/:status/:toUserId",
   userAuth,
   async (req, res) => {
+    console.log("Received request to send connection request");
     try {
       const fromUserId = req.user._id;
       const toUserId = req.params.toUserId;
@@ -18,14 +20,14 @@ requestRouter.post(
 
       if (!allowedStatus.includes(status)) {
         throw new Error(
-          `Invalid status. Allowed statuses are: ${allowedStatus.join(", ")}`
+          `Invalid status. Allowed statuses are: ${allowedStatus.join(", ")}`,
         );
       }
 
       const toUser = await User.findById(toUserId);
       if (!toUser) {
         throw new Error(
-          "The user you are trying to connect with does not exist"
+          "The user you are trying to connect with does not exist",
         );
       }
 
@@ -45,7 +47,7 @@ requestRouter.post(
 
       if (existingConnectionRequest) {
         throw new Error(
-          "A connection request already exists between these users"
+          "A connection request already exists between these users",
         );
       }
 
@@ -55,6 +57,15 @@ requestRouter.post(
         status,
       });
       const data = await connectionRequest.save();
+      console.log("Connection request saved:");
+
+      const emailResult = await sendEmail.run( "You got a new connection request"+ req.user.firstName,req.user.firstName +
+          " is " +
+          status +
+          " to connect with " +
+          toUser.firstName,);
+      console.log("email result is " + " " + emailResult);
+  
       res.json({
         message:
           req.user.firstName +
@@ -67,7 +78,7 @@ requestRouter.post(
     } catch (err) {
       res.status(400).send("ERROR : " + err.message);
     }
-  }
+  },
 );
 requestRouter.post(
   "/request/review/:status/:requestId",
@@ -80,7 +91,7 @@ requestRouter.post(
       const allowedStatuses = ["accepted", "rejected"];
       if (!allowedStatuses.includes(status)) {
         throw new Error(
-          `Invalid status. Allowed statuses are: ${allowedStatuses.join(", ")}`
+          `Invalid status. Allowed statuses are: ${allowedStatuses.join(", ")}`,
         );
       }
 
@@ -105,8 +116,7 @@ requestRouter.post(
     } catch (err) {
       res.status(400).send("ERROR : " + err.message);
     }
-  }
+  },
 );
-
 
 module.exports = requestRouter;
